@@ -1,0 +1,163 @@
+---
+title: "Praca domowa 1"
+author: "Rafał Grądziel"
+date: "6 marca 2016"
+output: html_document
+---
+
+#Wprowadzenie
+
+W zeszłym tygodniu zostały przyznane nagrody Amerykańskiej Akademii Sztuki i Wiedzy Filmowej znane wszystkim jako **Oscar'y**. W oparciu o zbiór 50 tys. tweet'ów przed rozdaniem oraz 50 tys. po rozdaniu nagród - zawierających w sobie słowo "Oscar" - przeprowadziłem poniżej analizę kilku wybranych parametrów.
+
+Oto przykładowe wywołanie kilku elementów pobranej bazy:
+
+```{r, ab, warning=FALSE, message=FALSE}
+tweetsprzed <- read.csv(file="C:\\Users\\Rafał\\Desktop\\do\\RiBigData\\twitterList2.csv")
+tweets <- read.csv(file="C:\\Users\\Rafał\\Desktop\\do\\RiBigData\\tweetList.csv")
+head(tweets)
+```
+
+##1. Nagrodzeni
+
+Wiemy już kto został nagrodzony, jednakże kto najczęściej pojawiał się w tweet'ach **po** gali- czyja wygrana była najszerzej komentowana?
+
+Za pomoca pakietu *stringi* zliczymy, ile razy pojawiały się nazwiska zwyciezców w pobranej bazie. Dodatkowo, aby uniknąć problemu związanego z case sensitive, cały tekst bedzie zapisany dużymi literami.
+
+```{r, dane, warning=FALSE, message=FALSE, dependson='ab'}
+library(stringi)
+tekst=toupper(tweets$text)
+dicaprio=sum(stri_count(tekst,fixed="DICAPRIO"))
+spotlight=sum(stri_count(tekst,fixed="SPOTLIGHT"))
+larson=sum(stri_count(tekst,fixed="LARSON"))
+rylance=sum(stri_count(tekst,fixed="RYLANCE"))
+vikander=sum(stri_count(tekst,fixed="VIKANDER"))
+alejandro=sum(stri_count(tekst,fixed="ALEJANDRO"))
+ssmith=sum(stri_count(tekst,fixed="SAM SMITH"))
+synszawla=sum(stri_count(tekst,fixed="SAUL FIA"))
+bigshort=sum(stri_count(tekst,fixed="BIG SHORT"))
+
+```
+
+```{r, results = 'asis', dependson='dane',echo=FALSE, warning=FALSE, message=FALSE}
+
+x=c(dicaprio,larson,spotlight,alejandro,ssmith,rylance,vikander,synszawla,bigshort)
+y=c("Leonardo DiCaprio","Brie Larson","Spotlight","Alejandro Inarritu","Writing's on the Wall","Mark Rylance","Alicia Vikander","Saul Fia / Syn Szawła","Big Short")
+z=c("Aktor pierwszoplanowy","Aktorka pierwszoplanowa","Film","Reżyser","Piosenka","Aktor drugoplanowy","Aktorka drugoplanowa","Film nieanglojęzyczny","Scenariusz adaptowany")
+oskary=data.frame(Nagroda=z,Kto=y, Wartość=x)
+
+library(knitr)
+kable(oskary[,1:3], format = "markdown")
+```
+
+Jak widzimy Leonardo DiCaprio dominuje w tweet'ach dotyczących gali Oskarów. 
+Kolejnym interesującym zjawiskiem jest to, iż niewiele mniej tweet'ów było związanych z filmem w którym wystąpił DiCaprio - "Zjawa", niż z filmem, który zdobył Oskara - "Spotlight".
+```{r, results = 'asis', dependson='dane',echo=FALSE, warning=FALSE, message=FALSE}
+revenant=sum(stri_count(tekst,fixed="REVENANT"))
+x=c(revenant,spotlight)
+y=c("Zjawa","Spotlight")
+
+oskary=data.frame(Film=y, Wartość=x)
+
+kable(oskary[,1:2], format = "markdown")
+```
+
+##2. Nagroda wieczoru - przed i po..
+
+Znacząca część osób, która interesuje się galą rozdania Oscar'ów, zwróciła w tym roku swoją uwagę na przede wszystkim jedną kategorię - czy Leonardo DiCaprio otrzyma nagrodę dla aktora pierwszoplanowego? Korzystając z dwóch zbiorów CSV - tweet'y przed i po gali rozważmy jak często wspominane były nazwiska nominowanych do tej nagrody.
+
+
+```{r, results = 'asis', dependson='ab',echo=FALSE, warning=FALSE, message=FALSE}
+tekst_przed=toupper(tweetsprzed$text)
+dicaprio_przed=sum(stri_count(tekst_przed,fixed="DICAPRIO"))
+damon_przed=sum(stri_count(tekst_przed,fixed="DAMON"))
+redmayne_przed=sum(stri_count(tekst_przed,fixed="REDMAYNE"))
+fassbender_przed=sum(stri_count(tekst_przed,fixed="FASSBENDER"))
+cranston_przed=sum(stri_count(tekst_przed,fixed="CRANSTON"))
+kto_przed=c(dicaprio_przed,damon_przed,redmayne_przed,fassbender_przed,cranston_przed)
+
+dicaprio=sum(stri_count(tekst,fixed="DICAPRIO"))
+damon=sum(stri_count(tekst,fixed="DAMON"))
+redmayne=sum(stri_count(tekst,fixed="REDMAYNE"))
+fassbender=sum(stri_count(tekst,fixed="FASSBENDER"))
+cranston=sum(stri_count(tekst,fixed="CRANSTON"))
+kto=c(dicaprio,damon,redmayne,fassbender,cranston)
+
+y=c("Leonardo DiCaprio","Matt Damon","Eddie Redmayne","Michael Fassbender","Bryan Cranston")
+oskary=data.frame(Kto=y, Przed=kto_przed, Po=kto)
+
+kable(oskary[,1:3], format = "markdown")
+
+```
+
+Wprost z tabeli wnioskujemy, że najwiecej osób pisało tweet'y dotyczące DiCaprio, zarówno przed i po rozdaniu nagród. Jednakże, zauważalny jest dość znaczący spadek w postach dotyczących Eddie'go Redmayne. Wydaje się być to spowodwoane tym, że przed galą wiele osób uważało, że to właśnie jemu należy się Oscar za niesamowitą rolę w filmie "Dziewczyna z portretu" - zagrał kobietę w tym filmie.
+
+
+##3. Technologia to ważna rzecz
+
+Obecnie tweet'ować można z większości urządzeń elektornicznych za pomocą aplikacji lub tradycyjnie z przeglądarki. Rozważając dane przed i po rozdaniu nagród, jako jeden zbiór, spójrzmy jak często tweet'ujemy z: 
+
+* Iphone'a 
+* Androida
+* Standardowo przez przeglądarke - *Web Client* lub  *Tweet Deck*
+
+```{r, results = 'asis', dependson='ab',echo=FALSE, warning=FALSE, message=FALSE}
+
+zrodlo_po=tweets$statusSource
+zrodlo_przed=tweetsprzed$statusSource
+iPhone=sum(stri_count(zrodlo_przed,fixed="iPhone"))+sum(stri_count(zrodlo_po,fixed="iPhone"))
+android=sum(stri_count(zrodlo_przed,fixed="Android"))+sum(stri_count(zrodlo_po,fixed="Android"))
+TweetDeck=sum(stri_count(zrodlo_przed,fixed="Tweet Deck"))+sum(stri_count(zrodlo_po,fixed="Tweet Deck"))
+client=sum(stri_count(zrodlo_przed,fixed="Web Client"))+sum(stri_count(zrodlo_po,fixed="Web Client"))+TweetDeck
+x=c(iPhone,android,client)
+
+pie(x,labels=c("iPhone","Android","Web Client"),col=c(3,4,8))
+```
+
+Możemy postawić hipotezę, że zdecydowanie najpopularniejszymi urządzeniami do tweet'owania są iPhone'y oraz telefony z systemem Android. Dostępność w dowolnym momencie i szybkość przekazu to zdecydowanie najważniejsze czynniki obecnie.
+
+##4. Ale cóż to były za emocje..
+
+Wszystkie konkursy wywołują w nas wiele emocji. Każdy z nas chce wygrywać lub przynajmniej, aby jego kandydat/faworyt został zwycięzcą. Niektórzy nie wytrzymując tak silnej dawki emocji, zaczynają korzystać z pewnego środka odstresowującego zwanego potocznie inwektywami - tj. rzucamy mięsem. Zbadajmy jak dużo tweet'ów z naszej próbki skorzystało z tego środka odstresowującego.
+
+```{r, results = 'asis', dependson='ab',echo=FALSE, warning=FALSE, message=FALSE}
+tekst=toupper(tweetsprzed$text)
+fuck=sum(stri_count(tekst,fixed="FUCK"))
+whore=sum(stri_count(tekst,fixed="WHORE"))
+bitch=sum(stri_count(tekst,fixed="BITCH"))
+dumb=sum(stri_count(tekst,fixed="DUMB"))
+jerk=sum(stri_count(tekst,fixed="JERK"))
+x=c(fuck,whore,bitch,dumb,jerk)
+nazwy=c("f**k","w***e","b***h","d**b","j**k")
+barplot(x,names.arg=nazwy,main="Liczba przekleństw przed galą",beside=TRUE,ylim=c(0,max(x)+50))
+text(0.7,x[1]+10,x[1],font=2)
+text(1.9,x[2]+10,x[2],font=2)
+text(3.1,x[3]+10,x[3],font=2)
+text(4.3,x[4]+10,x[4],font=2)
+text(5.5,x[5]+10,x[5],font=2)
+
+```
+
+```{r, results = 'asis', dependson='ab',echo=FALSE, warning=FALSE, message=FALSE}
+tekst=toupper(tweets$text)
+fuck=sum(stri_count(tekst,fixed="FUCK"))
+whore=sum(stri_count(tekst,fixed="WHORE"))
+bitch=sum(stri_count(tekst,fixed="BITCH"))
+dumb=sum(stri_count(tekst,fixed="DUMB"))
+jerk=sum(stri_count(tekst,fixed="JERK"))
+x=c(fuck,whore,bitch,dumb,jerk)
+nazwy=c("f**k","w***e","b***h","d**b","j**k")
+barplot(x,names.arg=nazwy,main="Liczba przekleństw po gali",beside=TRUE,ylim=c(0,max(x)+50))
+text(0.7,x[1]+10,x[1],font=2)
+text(1.9,x[2]+10,x[2],font=2)
+text(3.1,x[3]+10,x[3],font=2)
+text(4.3,x[4]+10,x[4],font=2)
+text(5.5,x[5]+10,x[5],font=2)
+
+```
+
+Jak widzimy liczba przekleństw cechuje się pewną stałością w czasie. Jedynie w przypadku słowa _f**k_ mogliśmy zaobserwować wzrost o ponad 40 wystąpień po gali.
+
+
+#Podsumowanie
+
+Jak widzimy korzystając z historii Tweeter'a możemy pobierać i przetwarzać dane na wiele sposobów. Niestety największym mankamentem poboru danych z historii jest to, iż tracimy np. dane o lokalizacji - porównując do obserwowania w czasie rzeczywistym podczas którego te dane możemy wyłuskąć. Jednakże, wciąż pozostaje nam najistotniejsza do analiz część tweet'a - mianowicie jego treść!
