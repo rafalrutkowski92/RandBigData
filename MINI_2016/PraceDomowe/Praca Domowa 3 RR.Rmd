@@ -1,0 +1,51 @@
+---
+title: "Praca domowa 3"
+output: html_document
+---
+
+Wczytuje nasze dane do jednej ramki danych (z kolumnami "Miesiac","Dzien","Godzina","Stanowisko","Identyfikator"):
+
+```{r, eval=FALSE}
+ramka=data.frame()
+
+lista=list.files("C:/Users/Rafał/Desktop/R/2013/",recursive = TRUE)
+nasza=stri_extract_all_regex(lista,".*log")
+nasza=nasza[!is.na(nasza)]
+
+m=length(nasza)
+
+for(j in 1:m)
+{
+	zr=stri_c("C:/Users/Rafał/Desktop/R/2013/",nasza[j])
+	dane=readLines(zr)
+	head(dane)
+	regex=stri_match_all_regex(dane,"([A-Za-z]+)  ([0-9]+) ([0-9]+:[0-9]+:[0-9]+) hostname=(.*) INFO.*Added visitor ([0-9]+) ")
+	regex=regex[unlist(lapply(regex,function(x){all(!is.na(x))}))]
+	n=length(regex)
+	n
+	if(n>0)
+	{
+		for(i in 1:n)
+		{
+			ramka=rbind(ramka,as.data.frame(regex[[i]])[,-1])
+		}
+	}
+	
+}
+
+names(ramka)=c("Miesiac","Dzien","Godzina","Stanowisko","Identyfikator")
+head(ramka)
+```
+
+
+Wystarczy teraz dla każdego stanowiska policzyć ilość różnych odwiedzających:
+
+```{r,eval=FALSE}
+ramka %>%
+	group_by(Stanowisko) %>%
+	distinct %>%
+	select(Stanowisko,Identyfikator) %>%
+	summarise(
+		Suma = sum(Identyfikator, na.rm = TRUE)
+	)
+```
